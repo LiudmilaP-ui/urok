@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор промтов для создания конспекта урока</title>
+    <!-- Подключение Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Конфигурация Tailwind для использования шрифта Inter и кастомных цветов -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'primary-blue': '#1D4ED8',
+                        'secondary-blue': '#3B82F6',
+                        'faint-gray': '#C0C4C7',
+                        'success-green': '#10B981',
+                        'error-red': '#EF4444'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        }
+        
+        .form-section {
+            transition: all 0.3s ease;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .pulse-highlight {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+        
+        .checkbox-group {
+            transition: all 0.2s ease;
+        }
+        
+        .checkbox-group:hover {
+            transform: translateY(-2px);
+        }
+        
+        .progress-bar {
+            height: 4px;
+            background-color: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #3B82F6;
+            transition: width 0.5s ease;
+        }
+        
+        textarea {
+            resize: none;
+            overflow: auto;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            border-color: #3B82F6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        
+        select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236B7280'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.21 8.27a.75.75 0 0 1 .02-1.06Z' clip-rule='evenodd' /%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+        
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: #1F2937;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.75rem;
+        }
+        
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8 min-h-screen flex items-start justify-center">
+    <div class="w-full max-w-4xl bg-white p-6 sm:p-8 rounded-xl shadow-2xl space-y-8">
+        
+        <!-- Заголовок -->
+        <header class="text-center space-y-4 fade-in">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-primary-blue flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 mr-3 text-secondary-blue">
+                    <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM9 7.5A.75.75 0 0 0 9 9h6a.75.75 0 0 0 0-1.5H9ZM9 12a.75.75 0 0 0 0 1.5h6a.75.75 0 0 0 0-1.5H9ZM9 16.5a.75.75 0 0 0 0 1.5h6a.75.75 0 0 0 0-1.5H9Z" clip-rule="evenodd" />
+                </svg>
+                Генератор промтов для создания конспекта урока
+            </h1>
+            <p class="text-gray-600 max-w-2xl mx-auto">Заполните форму ниже, чтобы создать детализированный промпт для нейросети, который поможет сгенерировать структурированный конспект урока.</p>
+            
+            <!-- Прогресс-бар -->
+            <div class="progress-bar max-w-md mx-auto">
+                <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+            </div>
+        </header>
+
+        <!-- Форма для ввода данных -->
+        <section id="input-form" class="space-y-8">
+            <div class="form-section fade-in">
+                <h2 class="text-2xl font-semibold text-gray-800 border-b pb-2 border-gray-200 flex items-center">
+                    <span class="bg-primary-blue text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">1</span>
+                    Основные параметры
+                </h2>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+                    <!-- Предмет -->
+                    <div>
+                        <label for="subject" class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                            Предмет
+                            <span class="tooltip ml-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-gray-400">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM8.94 6.94a.75.75 0 11-1.061-1.061 3 3 0 012.87-1.96zm.53 4.28a.75.75 0 000 1.06l1 1a.75.75 0 101.06-1.06l-1-1a.75.75 0 00-1.06 0zM10 15a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                                </svg>
+                                <span class="tooltip-text">Выберите предмет, для которого создается конспект</span>
+                            </span>
+                        </label>
+                        <select id="subject" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none text-gray-900 bg-white transition duration-200">
+                            <option value="" disabled selected class="text-faint-gray italic">ВЫБЕРИ</option>
+                            <option value="Алгебра">Алгебра</option>
+                            <option value="Биология">Биология</option>
+                            <option value="Всемирная история">Всемирная история</option>
+                            <option value="География">География</option>
+                            <option value="Геометрия">Геометрия</option>
+                            <option value="Изобразительное искусство">Изобразительное искусство</option>
+                            <option value="Иностранный язык">Иностранный язык</option>
+                            <option value="Математика">Математика</option>
+                            <option value="Музыка">Музыка</option>
+                            <option value="Русская литература">Русская литература</option>
+                            <option value="Русский язык">Русский язык</option>
+                            <option value="Трудовое обучение">Трудовое обучение</option>
+                            <option value="Физика">Физика</option>
+                            <option value="Физическая культура">Физическая культура</option>
+                            <option value="Химия">Химия</option>
+                        </select>
+                    </div>
+
+                    <!-- Класс -->
+                    <div>
+                        <label for="class_level" class="block text-sm font-medium text-gray-700 mb-1">Класс</label>
+                        <select id="class_level" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none text-gray-900 bg-white transition duration-200">
+                            <option value="" disabled selected class="text-faint-gray italic">ВЫБЕРИ</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Тема урока -->
+                <div class="mt-6">
+                    <label for="topic" class="block text-sm font-medium text-gray-700 mb-1">Тема урока</label>
+                    <input type="text" id="topic" value="" placeholder="Например: закон Ньютона"
+                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none text-gray-900 placeholder-faint-gray italic transition duration-200">
+                </div>
+            </div>
+
+            <div class="form-section fade-in">
+                <h2 class="text-2xl font-semibold text-gray-800 border-b pb-2 border-gray-200 flex items-center">
+                    <span class="bg-primary-blue text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">2</span>
+                    Детализация запроса
+                </h2>
+
+                <!-- Цель урока (РАЗДЕЛЬНО) -->
+                <div class="space-y-6 mt-6">
+                    <h3 class="block text-lg font-bold text-gray-800 border-l-4 border-secondary-blue pl-3 py-1 bg-blue-50 rounded-r">Цель урока (Результат для учащихся)</h3>
+                    
+                    <div>
+                        <label for="goal_know" class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                            Учащиеся должны знать:
+                            <span class="tooltip ml-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-gray-400">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM8.94 6.94a.75.75 0 11-1.061-1.061 3 3 0 012.87-1.96zm.53 4.28a.75.75 0 000 1.06l1 1a.75.75 0 101.06-1.06l-1-1a.75.75 0 00-1.06 0zM10 15a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                                </svg>
+                                <span class="tooltip-text">Факты, понятия, определения, которые учащиеся должны усвоить</span>
+                            </span>
+                        </label>
+                        <textarea id="goal_know" rows="3" placeholder="Например: Ключевые понятия, факты, формулировки."
+                                  class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none text-gray-900 transition duration-200"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label for="goal_can_do" class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                            Учащиеся должны уметь:
+                            <span class="tooltip ml-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-gray-400">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM8.94 6.94a.75.75 0 11-1.061-1.061 3 3 0 012.87-1.96zm.53 4.28a.75.75 0 000 1.06l1 1a.75.75 0 101.06-1.06l-1-1a.75.75 0 00-1.06 0zM10 15a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                                </svg>
+                                <span class="tooltip-text">Навыки, умения, действия, которые учащиеся должны освоить</span>
+                            </span>
+                        </label>
+                        <textarea id="goal_can_do" rows="3" placeholder="Например: Навыки, действия, применение знаний, решать задачи, анализировать текст."
+                                  class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none text-gray-900 transition duration-200"></textarea>
+                    </div>
+                </div>
+
+                <!-- Структура/Этапы урока (Выбор из списка) -->
+                <div class="mt-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Структура/Этапы урока (Выберите обязательные)</label>
+                    <div id="stages_list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <!-- Этапы будут добавлены через JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Варианты работы (Выбор из списка) -->
+                <div class="mt-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Варианты работы и задания (Выберите несколько)</label>
+                    <div id="work_variants_list" class="space-y-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <!-- Варианты работы будут добавлены через JavaScript -->
+                    </div>
+                    
+                    <label for="work_variants_custom" class="block text-sm font-medium text-gray-700 mt-4 mb-1">Другие варианты (укажите вручную, через запятую)</label>
+                    <textarea id="work_variants_custom" rows="2" placeholder="Например: Использование интерактивной доски, моделирование процессов."
+                              class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none text-gray-900 placeholder-faint-gray italic transition duration-200"></textarea>
+                </div>
+
+                <!-- Используемый материал/Контент -->
+                <div class="mt-6">
+                    <label for="content_material" class="block text-sm font-medium text-gray-700 mb-1">Используемый материал/Ключевой контент</label>
+                    <textarea id="content_material" rows="5" placeholder="Например: Перечислите ключевые понятия, факты и разделы, которые должны быть в конспекте."
+                              class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none text-gray-900 transition duration-200"></textarea>
+                </div>
+            </div>
+
+            <!-- Кнопка генерации -->
+            <button id="generate-button"
+                    class="w-full py-3 bg-secondary-blue text-white font-bold text-lg rounded-xl shadow-lg hover:bg-primary-blue transition duration-200 focus:outline-none focus:ring-4 focus:ring-secondary-blue focus:ring-opacity-50 pulse-highlight mt-4">
+                Сгенерировать промт
+            </button>
+        </section>
+
+        <!-- Сгенерированный промт -->
+        <section id="output-section" class="pt-6 border-t border-gray-200 hidden fade-in">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 mr-2 text-success-green">
+                    <path fill-rule="evenodd" d="M19.916 4.626a.75.75 0 0 1 .208 1.002l-7.5 11.25a.75.75 0 0 1-1.154.114l-3.75-3.75a.75.75 0 0 1 1.06-1.06l3.18 3.18 6.94-10.41a.75.75 0 0 1 1.002-.208Z" clip-rule="evenodd" />
+                </svg>
+                Готовый промт для нейросети:
+            </h2>
+            <textarea id="generated-prompt" rows="12" readonly
+                      class="mt-1 block w-full p-4 border-2 border-green-300 bg-green-50 rounded-lg text-gray-900 font-mono text-sm shadow-inner transition duration-200"></textarea>
+            
+            <div class="flex items-center mt-4">
+                <button id="copy-button"
+                        class="py-2 px-6 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition duration-200 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mr-2">
+                        <path fill-rule="evenodd" d="M13.887 3.182c.396.037.79.08 1.183.128C16.194 3.45 17 4.414 17 5.517V16.75A2.25 2.25 0 0 1 14.75 19h-9.5A2.25 2.25 0 0 1 3 16.75V5.517c0-1.103.806-2.068 1.93-2.207.393-.048.787-.09 1.183-.128A3.001 3.001 0 0 1 9 1h2c1.373 0 2.531.923 2.887 2.182ZM7.5 4A1.5 1.5 0 0 1 9 2.5h2A1.5 1.5 0 0 1 12.5 4v.5h-5V4Z" clip-rule="evenodd" />
+                    </svg>
+                    Копировать промт
+                </button>
+                <span id="copy-message" class="ml-4 text-sm font-medium opacity-0 transition duration-300"></span>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Элементы формы
+            const subject = document.getElementById('subject');
+            const classLevel = document.getElementById('class_level');
+            const topic = document.getElementById('topic');
+            const goalKnow = document.getElementById('goal_know');
+            const goalCanDo = document.getElementById('goal_can_do');
+            const contentMaterial = document.getElementById('content_material');
+            const workVariantsCustom = document.getElementById('work_variants_custom');
+            const generateButton = document.getElementById('generate-button');
+            const generatedPrompt = document.getElementById('generated-prompt');
+            const outputSection = document.getElementById('output-section');
+            const copyButton = document.getElementById('copy-button');
+            const copyMessage = document.getElementById('copy-message');
+            const progressFill = document.getElementById('progress-fill');
+
+            // Шаблоны для заполнителей
+            const contentTemplate = "Например: Основные законы движения: инерция, второй закон, третий закон. Понятие силы, массы, ускорения. Формулы и определения.";
+            const knowTemplate = "Например: Формулировки и математические выражения законов Ньютона. Понятие силы, массы, ускорения.";
+            const canDoTemplate = "Например: Приводить примеры проявления каждого закона в жизни и решать простые задачи на их применение.";
+            
+            // Данные для этапов урока
+            const stagesData = [
+                { id: 'st_1', label: 'Организационный момент' },
+                { id: 'st_2', label: 'Проверка домашнего задания' },
+                { id: 'st_3', label: 'Актуализация предметного опыта' },
+                { id: 'st_4', label: 'Изучение новых знаний' },
+                { id: 'st_5', label: 'Первичная проверка понимания' },
+                { id: 'st_6', label: 'Закрепление' },
+                { id: 'st_7', label: 'Применение' },
+                { id: 'st_8', label: 'Обобщение и систематизация' },
+                { id: 'st_9', label: 'Контроль и самоконтроль' },
+                { id: 'st_10', label: 'Коррекция' },
+                { id: 'st_11', label: 'Информация о домашнем задании' },
+                { id: 'st_12', label: 'Подведение итогов' },
+                { id: 'st_13', label: 'Рефлексия' }
+            ];
+            
+            // Данные для вариантов работы
+            const workVariantsData = [
+                { id: 'wv_text_work', label: 'Работа с текстом учебника (вопросы, кластер)' },
+                { id: 'wv_analysis', label: 'Анализ карт, схем, диаграмм' },
+                { id: 'wv_discussion', label: 'Мозговой штурм / Дискуссия' },
+                { id: 'wv_group_work', label: 'Групповая работа / Проектная деятельность' },
+                { id: 'wv_individual', label: 'Фронтальный опрос / Индивидуальная работа' }
+            ];
+            
+            // Инициализация чекбоксов этапов
+            const stagesList = document.getElementById('stages_list');
+            stagesData.forEach(stage => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center checkbox-group p-2 bg-white rounded border border-gray-200 hover:border-secondary-blue';
+                div.innerHTML = `
+                    <input type="checkbox" id="${stage.id}" value="${stage.label}" 
+                           class="h-4 w-4 text-secondary-blue border-gray-300 rounded focus:ring-secondary-blue">
+                    <label for="${stage.id}" class="ml-2 text-sm text-gray-700 cursor-pointer">${stage.label}</label>
+                `;
+                stagesList.appendChild(div);
+            });
+            
+            // Инициализация чекбоксов вариантов работы
+            const workVariantsList = document.getElementById('work_variants_list');
+            workVariantsData.forEach(variant => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center checkbox-group p-2 bg-white rounded border border-gray-200 hover:border-secondary-blue';
+                div.innerHTML = `
+                    <input type="checkbox" id="${variant.id}" value="${variant.label}" 
+                           class="h-4 w-4 text-secondary-blue border-gray-300 rounded focus:ring-secondary-blue">
+                    <label for="${variant.id}" class="ml-2 text-sm text-gray-700 cursor-pointer">${variant.label}</label>
+                `;
+                workVariantsList.appendChild(div);
+            });
+            
+            // Получение всех чекбоксов после инициализации
+            const stagesCheckboxes = document.querySelectorAll('#stages_list input[type="checkbox"]');
+            const workVariantsCheckboxes = document.querySelectorAll('#work_variants_list input[type="checkbox"]');
+
+            // Управление стилем заполнителей
+            const managePlaceholderStyle = (element, template) => {
+                const updateStyle = () => {
+                    if (element.value.trim() === template.trim()) {
+                        element.classList.add('text-faint-gray', 'italic');
+                    } else {
+                        element.classList.remove('text-faint-gray', 'italic');
+                    }
+                };
+
+                element.value = template;
+                updateStyle();
+
+                element.addEventListener('input', updateStyle);
+                element.addEventListener('blur', updateStyle);
+                element.addEventListener('focus', () => {
+                    if (element.value.trim() === template.trim()) {
+                        element.classList.remove('text-faint-gray');
+                    }
+                });
+            };
+
+            // Применение стилей к полям с шаблонами
+            managePlaceholderStyle(goalKnow, knowTemplate);
+            managePlaceholderStyle(goalCanDo, canDoTemplate);
+            managePlaceholderStyle(contentMaterial, contentTemplate);
+            managePlaceholderStyle(workVariantsCustom, "");
+
+            // Обновление прогресс-бара
+            const updateProgressBar = () => {
+                let progress = 0;
+                const totalFields = 5; // subject, classLevel, topic, goalKnow, goalCanDo
+                let filledFields = 0;
+                
+                if (subject.value) filledFields++;
+                if (classLevel.value) filledFields++;
+                if (topic.value.trim()) filledFields++;
+                if (goalKnow.value.trim() && goalKnow.value.trim() !== knowTemplate.trim()) filledFields++;
+                if (goalCanDo.value.trim() && goalCanDo.value.trim() !== canDoTemplate.trim()) filledFields++;
+                
+                progress = (filledFields / totalFields) * 100;
+                progressFill.style.width = `${progress}%`;
+                
+                // Изменение цвета прогресс-бара в зависимости от заполнения
+                if (progress < 40) {
+                    progressFill.style.backgroundColor = '#EF4444'; // red
+                } else if (progress < 80) {
+                    progressFill.style.backgroundColor = '#F59E0B'; // amber
+                } else {
+                    progressFill.style.backgroundColor = '#10B981'; // green
+                }
+            };
+            
+            // Слушатели для обновления прогресс-бара
+            [subject, classLevel, topic, goalKnow, goalCanDo].forEach(element => {
+                element.addEventListener('input', updateProgressBar);
+                element.addEventListener('change', updateProgressBar);
+            });
+            
+            // Инициализация прогресс-бара
+            updateProgressBar();
+
+            // Генерация промта
+            generateButton.addEventListener('click', () => {
+                // Функция для получения значения
+                const getValue = (element, template) => {
+                    const value = element.value.trim();
+                    return value === template ? '' : value;
+                };
+
+                const s = subject.value.trim();
+                const cl = classLevel.value.trim();
+                const t = topic.value.trim();
+                const gKnow = getValue(goalKnow, knowTemplate);
+                const gCanDo = getValue(goalCanDo, canDoTemplate);
+                const cm = getValue(contentMaterial, contentTemplate);
+                
+                // Сбор выбранных этапов
+                let selectedStages = [];
+                stagesCheckboxes.forEach(checkbox => {
+                    if (checkbox.checked) {
+                        selectedStages.push(checkbox.value);
+                    }
+                });
+                const st = selectedStages.join('; ');
+                
+                // Сбор выбранных вариантов работы
+                let selectedVariants = [];
+                workVariantsCheckboxes.forEach(checkbox => {
+                    if (checkbox.checked) {
+                        selectedVariants.push(checkbox.value);
+                    }
+                });
+
+                const customVariant = getValue(workVariantsCustom, "");
+                if (customVariant) {
+                    selectedVariants.push(customVariant.replace(/, /g, '; ').replace(/,/g, '; '));
+                }
+                const wv = selectedVariants.join('; ');
+
+                // Валидация
+                if (!s || !cl || !t || !gKnow || !gCanDo) {
+                    showError('Пожалуйста, заполните все обязательные поля: "Предмет", "Класс", "Тема урока" и оба поля "Цели урока".');
+                    return;
+                }
+                
+                // Формирование промта
+                let prompt = `Составь подробный конспект урока для нейросети, используя следующую структуру и данные:\n\n`;
+                
+                prompt += `1. **Основные данные:**\n`;
+                prompt += `   - Предмет: ${s}\n`;
+                prompt += `   - Класс: ${cl}\n`;
+                prompt += `   - Тема урока: ${t}\n\n`;
+
+                prompt += `2. **Детализация и цель (по опыту):**\n`;
+                prompt += `   - Цель урока (Учащиеся должны знать): "${gKnow}"\n`;
+                prompt += `   - Цель урока (Учащиеся должны уметь): "${gCanDo}"\n`;
+
+                if (st) {
+                    prompt += `   - Структура/Этапы урока (Обязательно включить в конспект): ${st}\n`;
+                }
+
+                if (wv) {
+                    prompt += `   - Варианты работы и задания: ${wv}\n`;
+                }
+
+                if (cm) {
+                    prompt += `   - Используемый материал/Ключевой контент (Осветить в конспекте): ${cm}\n`;
+                }
+
+                prompt += `\nТребуемый формат: Сгенерируй конспект в виде структурированного текста (с заголовками этапов и описанием действий учителя/учащихся).`;
+
+                // Вывод результата
+                generatedPrompt.value = prompt;
+                outputSection.classList.remove('hidden');
+                outputSection.scrollIntoView({ behavior: 'smooth' });
+                
+                // Убираем сообщение об ошибке, если оно было
+                hideError();
+            });
+
+            // Функции для показа/скрытия ошибок
+            function showError(message) {
+                hideError(); // Сначала удаляем существующее сообщение
+                
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg mt-4 flex items-center fade-in';
+                errorDiv.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 mr-2 flex-shrink-0">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+                    </svg>
+                    <span>${message}</span>
+                `;
+                
+                generateButton.parentElement.insertBefore(errorDiv, generateButton);
+                
+                // Подсвечиваем незаполненные поля
+                highlightEmptyFields();
+            }
+            
+            function hideError() {
+                const existingError = document.querySelector('.error-message');
+                if (existingError) {
+                    existingError.remove();
+                }
+                
+                // Убираем подсветку с полей
+                removeHighlightFromFields();
+            }
+            
+            function highlightEmptyFields() {
+                const fieldsToCheck = [
+                    { element: subject, isEmpty: !subject.value },
+                    { element: classLevel, isEmpty: !classLevel.value },
+                    { element: topic, isEmpty: !topic.value.trim() },
+                    { element: goalKnow, isEmpty: !goalKnow.value.trim() || goalKnow.value.trim() === knowTemplate.trim() },
+                    { element: goalCanDo, isEmpty: !goalCanDo.value.trim() || goalCanDo.value.trim() === canDoTemplate.trim() }
+                ];
+                
+                fieldsToCheck.forEach(field => {
+                    if (field.isEmpty) {
+                        field.element.classList.add('border-error-red', 'bg-red-50');
+                    }
+                });
+            }
+            
+            function removeHighlightFromFields() {
+                const fields = [subject, classLevel, topic, goalKnow, goalCanDo, contentMaterial];
+                fields.forEach(field => {
+                    field.classList.remove('border-error-red', 'bg-red-50');
+                });
+            }
+
+            // Копирование промта
+            copyButton.addEventListener('click', () => {
+                generatedPrompt.select();
+                generatedPrompt.setSelectionRange(0, 99999);
+                
+                try {
+                    document.execCommand('copy');
+                    copyMessage.textContent = 'Промт скопирован в буфер обмена!';
+                    copyMessage.classList.remove('opacity-0', 'text-error-red');
+                    copyMessage.classList.add('opacity-100', 'text-success-green');
+                    
+                    setTimeout(() => {
+                        copyMessage.classList.remove('opacity-100');
+                        copyMessage.classList.add('opacity-0');
+                    }, 3000);
+                } catch (err) {
+                    console.error('Не удалось скопировать текст: ', err);
+                    copyMessage.textContent = 'Ошибка копирования!';
+                    copyMessage.classList.remove('opacity-0', 'text-success-green');
+                    copyMessage.classList.add('opacity-100', 'text-error-red');
+                    
+                    setTimeout(() => {
+                        copyMessage.classList.remove('opacity-100');
+                        copyMessage.classList.add('opacity-0');
+                    }, 3000);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
